@@ -3,11 +3,13 @@ import axios from "axios";
 import LocationSelector from "../components/locationSelector";
 import { useNavigate } from "react-router-dom";
 
-import { BsFillArchiveFill, BsFillGrid3X3GapFill, BsPeopleFill, BsFillBellFill } from 'react-icons/bs'
+import { BsFillArchiveFill, BsFillGrid3X3GapFill, BsPeopleFill, BsFillBellFill, BsFillPencilFill } from 'react-icons/bs'
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 function AdminHome() {
     const [totalProducts, setTotalProducts] = useState(null);
+    const [totalCategories, setTotalCategories] = useState(null);
+    const [totalReviews, setTotalReviews] = useState(null);
 
     useEffect(() => {
         async function fetchTotalProducts() {
@@ -23,6 +25,30 @@ function AdminHome() {
         fetchTotalProducts();
     }, []);
 
+    useEffect(() => {
+        async function fetchTotalCategories() {
+            try {
+                const response = await axios.get('http://localhost:8000/totalCategories');
+                setTotalCategories(response.data.totalCategoryCount);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        fetchTotalCategories();
+    }, []);
+
+    useEffect(() => {
+        async function fetchTotalReviews() {
+            try {
+                const response = await axios.get('http://localhost:8000/totalReviews');
+                setTotalReviews(response.data.totalReviewCount);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        fetchTotalReviews();
+    }, []);
+    
     const data = [
         {
             name: 'Page A',
@@ -90,21 +116,21 @@ function AdminHome() {
                         <h3>CATEGORIES</h3>
                         <BsFillGrid3X3GapFill className='card_icon' />
                     </div>
-                    <h1>12</h1>
+                    {totalCategories !== null ? <h1>{totalCategories}</h1> : <p>Loading...</p>}
                 </div>
                 <div className='card'>
                     <div className='card-inner'>
                         <h3>CUSTOMERS</h3>
                         <BsPeopleFill className='card_icon' />
                     </div>
-                    <h1>33</h1>
+                    <h1>#</h1>
                 </div>
                 <div className='card'>
                     <div className='card-inner'>
-                        <h3>ALERTS</h3>
-                        <BsFillBellFill className='card_icon' />
+                        <h3>REVIEWS</h3>
+                        <BsFillPencilFill className='card_icon' />
                     </div>
-                    <h1>42</h1>
+                    {totalReviews !== null ? <h1>{totalReviews}</h1> : <p>Loading...</p>}
                 </div>
             </div>
 

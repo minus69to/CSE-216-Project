@@ -5,8 +5,6 @@ const express = require("express");
 const path = require('path');
 // const connectToDatabase = require("./connectToDatabase.js");
 const { runQuery, extractData, connectToDatabase } = require("./runQuery.js");
-// const { default: AdminLogin } = require("../my-react-app/src/pages/adminLogin.js");
-// const { default: AdminDashbord } = require("../my-react-app/src/pages/adminDashbord.js");
 
 const app = express();
 
@@ -208,6 +206,58 @@ app.get('/totalProducts', async (req, res) => {
   }
 });
 
+
+// ------Total Category Count------
+
+async function getTotalCategoryCount() {
+  try {
+    const result = await runQuery('SELECT COUNT(DISTINCT CATEGORY_ID) FROM "MYPROJECT"."ARTWORK"',[]);
+    const totalCategoryCount = result.rows[0][0];
+    console.log(totalCategoryCount);
+    return totalCategoryCount;
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    throw error;
+  }
+}
+
+app.get('/totalCategories', async (req, res) => {
+  console.log("hello world");
+  try {
+    const totalCategoryCount = await getTotalCategoryCount();
+    res.status(200).json({totalCategoryCount, message: 'Welcome to the API!' });
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    res.status(500).json({ message: 'Error fetching total product count.' });
+  }
+});
+
+
+// ------Total Review Count------
+
+async function getTotalReviewCount() {
+  try {
+    const result = await runQuery('SELECT COUNT(*) FROM "MYPROJECT"."REVIEWS"',[]);
+    const totalReviewCount = result.rows[0][0];
+    console.log(totalReviewCount);
+    return totalReviewCount;
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    throw error;
+  }
+}
+
+app.get('/totalReviews', async (req, res) => {
+  console.log("hello world");
+  try {
+    const totalReviewCount = await getTotalReviewCount();
+    res.status(200).json({totalReviewCount, message: 'Welcome to the API!' });
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    res.status(500).json({ message: 'Error fetching total product count.' });
+  }
+});
+
 // ------------------------
 
 app.post('/searchProduct', async (req, res) => {
@@ -220,18 +270,11 @@ app.post('/searchProduct', async (req, res) => {
   const query = `
   SELECT * 
   FROM "MYPROJECT"."ARTWORK" 
-  WHERE LOWER(TITLE) LIKE '%' || LOWER(:productName) || '%'
-`;
-
-
-
-
+  WHERE LOWER(TITLE) LIKE '%' || LOWER(:productName) || '%'`;
 
   const bindParams = {
     productName: productName
   };
-  //app.post('/searchProduct',
-
 
   try {
     const result = await runQuery(query, bindParams);
@@ -276,21 +319,6 @@ app.get('/categories', async (req, res) => {
 });
 
 
-
-
-// app.get('/products', async (req, res) => {
-//   try {
-//     const query = 'SELECT * FROM Product';
-//     const queryData = await runQuery(query, []);
-//     console.log(queryData)
-//     const output = extractData(queryData, ['productID', 'subCategoryID', 'productName', 'brand', 'picture', 'descriptions']);
-//     res.json(output);
-//   } catch (error) {
-//     console.error('Error fetching products:', error);
-//     res.status(500).json({ error: 'Error fetching products' });
-//   }
-// });
-
 app.get('/products', async (req, res) => {
   const subCategoryID = req.query.subCategoryID;
   console.log(subCategoryID)
@@ -298,8 +326,6 @@ app.get('/products', async (req, res) => {
     const query = 'SELECT * FROM Product WHERE subCategoryID = :subCategoryID';
     const queryData = await runQuery(query, [subCategoryID]);
     //console.log(queryData)
-
-
 
     const output = extractData(queryData, ['productID', 'subCategoryID', 'productName', 'brand', 'picture', 'descriptions']);
     res.json(output);
@@ -336,6 +362,8 @@ app.get('/subCategories', async (req, res) => {
     res.status(500).json({ error: 'Error fetching subcategories' });
   }
 });
+
+
 app.get('/artwork', async (req, res) => {
   try {
     const query = `
