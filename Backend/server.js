@@ -181,8 +181,34 @@ app.post('/adminlogin', async (req, res) => {
   }
 });
 
-// ------AdminDashbord------
+// ------Total Product Count------
 
+async function getTotalProductCount() {
+  try {
+    // const connection = await oracledb.getConnection(dbConfig);
+    const result = await runQuery('SELECT get_total_product_count() FROM DUAL',[]);
+    const totalProductCount = result.rows[0][0];
+    console.log(totalProductCount);
+    // await connection.close();
+    return totalProductCount;
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    throw error;
+  }
+}
+
+app.get('/totalProducts', async (req, res) => {
+  console.log("hello world");
+  try {
+    const totalProductCount = await getTotalProductCount();
+    res.status(200).json({totalProductCount, message: 'Welcome to the API!' });
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    res.status(500).json({ message: 'Error fetching total product count.' });
+  }
+});
+
+// ------------------------
 
 app.post('/searchProduct', async (req, res) => {
   const { productName } = req.body;

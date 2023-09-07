@@ -51,7 +51,7 @@ const SearchBar = () => {
       setErrorMessage(error.message || "Something went wrong!");
     }
   };
-
+  
   return (
     <div className="search-bar">
       <input

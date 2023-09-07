@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import LocationSelector from "../components/locationSelector";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,21 @@ import { BsFillArchiveFill, BsFillGrid3X3GapFill, BsPeopleFill, BsFillBellFill }
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 function AdminHome() {
+    const [totalProducts, setTotalProducts] = useState(null);
+
+    useEffect(() => {
+        async function fetchTotalProducts() {
+            try {
+                // Replace with your actual API endpoint for total product count
+                const response = await axios.get('http://localhost:8000/totalProducts');
+                setTotalProducts(response.data.totalProductCount); // Assuming the API response has a "totalProductCount" property
+            } catch (error) {
+                // Handle error
+                console.error(error);
+            }
+        }
+        fetchTotalProducts();
+    }, []);
 
     const data = [
         {
@@ -54,6 +69,8 @@ function AdminHome() {
     ];
 
 
+
+
     return (
         <main className='main-container'>
             <div className='main-title'>
@@ -66,7 +83,7 @@ function AdminHome() {
                         <h3>PRODUCTS</h3>
                         <BsFillArchiveFill className='card_icon' />
                     </div>
-                    <h1>300</h1>
+                    {totalProducts !== null ? <h1>{totalProducts}</h1> : <p>Loading...</p>}
                 </div>
                 <div className='card'>
                     <div className='card-inner'>
