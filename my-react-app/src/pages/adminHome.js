@@ -113,7 +113,7 @@ function AdminHome() {
     return (
         <main className='main-container'>
             <div className='main-title'>
-                <h3>ADMIN DASHBOARD</h3>
+                <h3>ADMIN DASHBOARD </h3> 
             </div>
 
             <div className='main-cards'>

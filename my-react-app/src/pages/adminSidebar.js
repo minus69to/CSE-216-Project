@@ -19,9 +19,9 @@ function AdminSidebar({ openSidebarToggle, OpenSidebar }) {
 
             <ul className='sidebar-list'>
                 <li className='sidebar-list-item'>
-                    <a href="">
+                    {/* <a href=""> */}
                         <BsGrid1X2Fill className='icon' /> More info.
-                    </a>
+                    {/* </a> */}
                 </li>
                 <li className='sidebar-list-item'>
                     <a href="/adminSidebarToRating">
@@ -35,7 +35,7 @@ function AdminSidebar({ openSidebarToggle, OpenSidebar }) {
                 </li>
                 <li className='sidebar-list-item'>
                     <a href="/adminSidebarToRevenue">
-                        <BsPeopleFill className='icon' /> Revenue
+                        <BsPeopleFill className='icon' /> Revenue by Year
                     </a>
                 </li>
                 <li className='sidebar-list-item'>

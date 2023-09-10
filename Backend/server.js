@@ -503,6 +503,7 @@ app.put("/add", async (req, res) => {
 });
 
 // ------Sidebar to Anything------
+// ------Sidebar to Average Order Gap------
 
 app.post('/adminSidebarToAveragetime', async (req, res) => {
   // const { userId } = req.body;
@@ -565,6 +566,8 @@ app.post('/adminSidebarToAveragetime', async (req, res) => {
 
 app.post('/adminSidebarToBestseller', async (req, res) => {
   // const { userId } = req.body;
+  const { year } = req.body;
+  console.log(year);
 
   try {
     const query = `
@@ -582,7 +585,7 @@ JOIN
 JOIN
     ORDERS O ON OI.ORDER_ID = O.ORDER_ID
 WHERE
-    TO_CHAR(O.ORDER_DATE, 'YYYY') = '2023' -- Replace with the desired year
+    TO_CHAR(O.ORDER_DATE, 'YYYY') = :year -- Replace with the desired year
 GROUP BY
     A.NAME,
     TO_CHAR(O.ORDER_DATE, 'YYYY')
@@ -590,12 +593,12 @@ ORDER BY
     TOTAL_SALES DESC
     `;
 
-    // const bindParams = {
-    //   userId: userId
-    // };
+    const bindParams = {
+      year: year
+    };
 
     // Execute the query
-    const queryData = await runQuery(query, []);
+    const queryData = await runQuery(query, bindParams);
 
     // Define the columns to extract from the query data
     const columnsToExtract = [
@@ -619,7 +622,92 @@ ORDER BY
       item.ARTIST_NAME,
       item.ORDER_YEAR,
       item.TOTAL_SALES,
-      item.TOTAL_SOLD_PRODUCTS     
+      item.TOTAL_SOLD_PRODUCTS
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
+
+// ------Sidebar to Bestseller------
+
+app.post('/adminSidebarToBestcustomer', async (req, res) => {
+  // const { userId } = req.body;
+  const { year } = req.body;
+  console.log(year);
+
+  try {
+    const query = `
+    WITH CustomerBuyCount AS (
+      SELECT
+          U.USERNAME AS CUSTOMER_NAME,
+          TO_CHAR(O.ORDER_DATE, 'YYYY') AS ORDER_YEAR,
+          COUNT(OI.ORDER_ITEM_ID) AS TOTAL_BUY_COUNT,
+          SUM(OI.ITEM_PRICE * OI.QUANTITY) AS TOTAL_EXPENSES
+      FROM
+          USERS U
+      JOIN
+          ORDERS O ON U.USER_ID = O.USER_ID
+      JOIN
+          ORDERITEMS OI ON O.ORDER_ID = OI.ORDER_ID
+      WHERE
+          TO_CHAR(O.ORDER_DATE, 'YYYY') = :year -- Replace with the desired year
+      GROUP BY
+          U.USERNAME,
+          TO_CHAR(O.ORDER_DATE, 'YYYY')
+  )
+  SELECT
+      CUSTOMER_NAME,
+      ORDER_YEAR,
+      TOTAL_BUY_COUNT,
+      TOTAL_EXPENSES
+  FROM (
+      SELECT
+          CUSTOMER_NAME,
+          ORDER_YEAR,
+          TOTAL_BUY_COUNT,
+          TOTAL_EXPENSES,
+          RANK() OVER (PARTITION BY ORDER_YEAR ORDER BY TOTAL_BUY_COUNT DESC) AS BUY_COUNT_RANK
+      FROM
+          CustomerBuyCount
+  )
+  WHERE
+      BUY_COUNT_RANK = 1
+    `;
+
+    const bindParams = {
+      year: year
+    };
+
+    // Execute the query
+    const queryData = await runQuery(query, bindParams);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'CUSTOMER_NAME',
+      'ORDER_YEAR',
+      'TOTAL_BUY_COUNT',
+      'TOTAL_EXPENSES'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.CUSTOMER_NAME,
+      item.ORDER_YEAR,
+      item.TOTAL_BUY_COUNT,
+      item.TOTAL_EXPENSES
     ]);
 
     res.json(orderHistoryArray);
@@ -630,12 +718,275 @@ ORDER BY
 });
 
 
+// ------Sidebar to Bestseller------
+
+app.post('/adminSidebarToRevenue', async (req, res) => {
+  // const { userId } = req.body;
+  const { year } = req.body;
+  console.log(year);
+
+  try {
+    const query = `
+    SELECT
+    TO_CHAR(O.ORDER_DATE, 'MONTH') AS ORDER_MONTH,
+    COUNT(OI.ORDER_ITEM_ID) AS TOTAL_SELL_COUNT,
+    SUM(OI.ITEM_PRICE * OI.QUANTITY) AS TOTAL_SELL_PRICE
+FROM
+    ORDERS O
+JOIN
+    ORDERITEMS OI ON O.ORDER_ID = OI.ORDER_ID
+WHERE
+    TO_CHAR(O.ORDER_DATE, 'YYYY') = : year -- Replace with the desired year
+GROUP BY
+    TO_CHAR(O.ORDER_DATE, 'MONTH'),TO_CHAR(O.ORDER_DATE,'mm')
+ORDER BY
+    TO_CHAR(O.ORDER_DATE,'mm')
+    `;
+
+    const bindParams = {
+      year: year
+    };
+
+    // Execute the query
+    const queryData = await runQuery(query, bindParams);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'ORDER_MONTH',
+      'TOTAL_SELL_COUNT',
+      'TOTAL_SELL_PRICE'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.ORDER_MONTH,
+      item.TOTAL_SELL_COUNT,
+      item.TOTAL_SELL_PRICE
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
 
 
+// ------Sidebar to Rating Category------
+
+app.post('/adminSidebarToRatingCategory', async (req, res) => {
+  // const { userId } = req.body;
+
+  try {
+    const query = `
+    SELECT C.NAME AS CATEGORY_NAME, ROUND(AVG(R.RATING), 2) AS AVERAGE_REVIEW
+FROM CATEGORIES C
+JOIN ARTWORK A ON C.CATEGORY_ID = A.CATEGORY_ID
+LEFT JOIN REVIEWS R ON A.ARTWORK_ID = R.ARTWORK_ID
+GROUP BY C.NAME
+    `;
+
+    // const bindParams = {
+    //   userId: userId
+    // };
+
+    // Execute the query
+    const queryData = await runQuery(query, []);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'CATEGORY_NAME',
+      'AVERAGE_REVIEW'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.CATEGORY_NAME,
+      item.AVERAGE_REVIEW
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
 
 
+// ------Sidebar to Rating Artist------
 
+app.post('/adminSidebarToRatingArtist', async (req, res) => {
+  // const { userId } = req.body;
 
+  try {
+    const query = `
+    SELECT A.NAME AS ARTIST_NAME, ROUND(AVG(R.RATING), 2) AS AVG_RATING
+    FROM ARTISTS A
+    JOIN ARTWORK W ON A.ARTIST_ID = W.ARTIST_ID
+    LEFT JOIN REVIEWS R ON W.ARTWORK_ID = R.ARTWORK_ID
+    GROUP BY A.NAME    
+    `;
+
+    // const bindParams = {
+    //   userId: userId
+    // };
+
+    // Execute the query
+    const queryData = await runQuery(query, []);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'ARTIST_NAME',
+      'AVG_RATING'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.ARTIST_NAME,
+      item.AVG_RATING
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
+
+// ------Sidebar to Rating Artist------
+
+app.post('/adminSidebarToSellArtist', async (req, res) => {
+  // const { userId } = req.body;
+
+  try {
+    const query = `
+    SELECT A.NAME AS ARTIST_NAME,
+       SUM(OI.ITEM_PRICE) AS TOTAL_PRICE,
+       SUM(OI.QUANTITY) AS TOTAL_ITEMS_SOLD
+FROM ARTISTS A
+JOIN ARTWORK W ON A.ARTIST_ID = W.ARTIST_ID
+JOIN ORDERITEMS OI ON W.ARTWORK_ID = OI.ARTWORK_ID
+GROUP BY A.NAME   
+    `;
+
+    // const bindParams = {
+    //   userId: userId
+    // };
+
+    // Execute the query
+    const queryData = await runQuery(query, []);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'ARTIST_NAME',
+      'TOTAL_PRICE',
+      'TOTAL_ITEMS_SOLD'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.ARTIST_NAME,
+      item.TOTAL_PRICE,
+      item.TOTAL_ITEMS_SOLD
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
+
+// ------Sidebar to Rating Category------
+
+app.post('/adminSidebarToSellCategory', async (req, res) => {
+  // const { userId } = req.body;
+
+  try {
+    const query = `
+    SELECT C.NAME AS CATEGORY_NAME,
+       SUM(OI.ITEM_PRICE) AS TOTAL_PRICE,
+       SUM(OI.QUANTITY) AS TOTAL_ITEMS_SOLD
+FROM CATEGORIES C
+JOIN ARTWORK A ON C.CATEGORY_ID = A.CATEGORY_ID
+JOIN ORDERITEMS OI ON A.ARTWORK_ID = OI.ARTWORK_ID
+GROUP BY C.NAME 
+    `;
+
+    // const bindParams = {
+    //   userId: userId
+    // };
+
+    // Execute the query
+    const queryData = await runQuery(query, []);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'CATEGORY_NAME',
+      'TOTAL_PRICE',
+      'TOTAL_ITEMS_SOLD'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.CATEGORY_NAME,
+      item.TOTAL_PRICE,
+      item.TOTAL_ITEMS_SOLD
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
+
+// -------Port & Listn------
 
 const port = 8000;
 
