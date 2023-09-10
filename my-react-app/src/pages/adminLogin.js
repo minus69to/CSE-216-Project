@@ -3,6 +3,7 @@ import axios from "axios";
 import LocationSelector from "../components/locationSelector";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../App";
+import  "./adminLogin.css"
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -29,7 +30,7 @@ const AdminLogin = () => {
         setErrorMessage(response.data.message || "Login failed!");
       }
     } catch (error) {
-      setErrorMessage(error.message || "Something went wrong!");
+      setErrorMessage("Invalid or insufficient information!");
     }
   };
 

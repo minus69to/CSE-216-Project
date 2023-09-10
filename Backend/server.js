@@ -258,6 +258,32 @@ app.get('/totalReviews', async (req, res) => {
   }
 });
 
+
+// ------Total Customer Count------
+
+async function getTotalCustomerCount() {
+  try {
+    const result = await runQuery('SELECT COUNT(*) FROM "MYPROJECT"."USERS"',[]);
+    const totalCustomerCount = result.rows[0][0];
+    console.log(totalCustomerCount);
+    return totalCustomerCount;
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    throw error;
+  }
+}
+
+app.get('/totalCustomers', async (req, res) => {
+  console.log("hello world");
+  try {
+    const totalCustomerCount = await getTotalCustomerCount();
+    res.status(200).json({totalCustomerCount, message: 'Welcome to the API!' });
+  } catch (error) {
+    console.error('Error fetching total product count:', error);
+    res.status(500).json({ message: 'Error fetching total product count.' });
+  }
+});
+
 // ------------------------
 
 app.post('/searchProduct', async (req, res) => {

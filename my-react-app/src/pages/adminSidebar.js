@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 import { BsCart3, BsGrid1X2Fill, BsFillArchiveFill, BsFillGrid3X3GapFill, BsPeopleFill, BsListCheck, BsMenuButtonWideFill, BsFillGearFill } from 'react-icons/bs';
 
+// import AdminSidebarToRating from './pages/adminSidebarToRating'
+
 function AdminSidebar({ openSidebarToggle, OpenSidebar }) {
     return (
         <aside id="sidebar" className={openSidebarToggle ? "sidebar-responsive" : ""}>
@@ -18,37 +20,37 @@ function AdminSidebar({ openSidebarToggle, OpenSidebar }) {
             <ul className='sidebar-list'>
                 <li className='sidebar-list-item'>
                     <a href="">
-                        <BsGrid1X2Fill className='icon' /> Dashboard
+                        <BsGrid1X2Fill className='icon' /> More info.
                     </a>
                 </li>
                 <li className='sidebar-list-item'>
-                    <a href="#">
-                        <BsFillArchiveFill className='icon' /> Products
+                    <a href="/adminSidebarToRating">
+                        <BsFillArchiveFill className='icon' /> Rating
                     </a>
                 </li>
                 <li className='sidebar-list-item'>
-                    <a href="#">
-                        <BsFillGrid3X3GapFill className='icon' /> Categories
+                    <a href="/adminSidebarToSales">
+                        <BsFillGrid3X3GapFill className='icon' /> Sales
                     </a>
                 </li>
                 <li className='sidebar-list-item'>
-                    <a href="#">
-                        <BsPeopleFill className='icon' /> Customers
+                    <a href="/adminSidebarToRevenue">
+                        <BsPeopleFill className='icon' /> Revenue
                     </a>
                 </li>
                 <li className='sidebar-list-item'>
-                    <a href="#">
-                        <BsListCheck className='icon' /> Inventory
+                    <a href="/adminSidebarToBestseller">
+                        <BsListCheck className='icon' /> Bestseller
                     </a>
                 </li>
                 <li className='sidebar-list-item'>
-                    <a href="#">
-                        <BsMenuButtonWideFill className='icon' /> Reports
+                    <a href="/adminSidebarToBestcustomer">
+                        <BsMenuButtonWideFill className='icon' /> Best Customer
                     </a>
                 </li>
                 <li className='sidebar-list-item'>
-                    <a href="#">
-                        <BsFillGearFill className='icon' /> Setting
+                    <a href="/adminSidebarToAveragetime">
+                        <BsFillGearFill className='icon' /> Average time of Orders
                     </a>
                 </li>
             </ul>

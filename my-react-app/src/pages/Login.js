@@ -23,15 +23,15 @@ const Login = () => {
       });
       
       if (response.status === 200) {
-        const user = response.data[0]; 
+        const user = response.data[0];    
         setUserData(user);
         // Login(userData);
         navigate('/newPage');
       }  else {
-        setErrorMessage(response.data.message || "Login failed!");
+        setErrorMessage(response.data.message + "Login failed!");
       }
     } catch (error) {
-      setErrorMessage(error.message || "Something went wrong!");
+      setErrorMessage("Invalid or insufficient information!");
     }
   };
 
