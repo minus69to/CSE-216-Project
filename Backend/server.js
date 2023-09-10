@@ -184,7 +184,7 @@ app.post('/adminlogin', async (req, res) => {
 async function getTotalProductCount() {
   try {
     // const connection = await oracledb.getConnection(dbConfig);
-    const result = await runQuery('SELECT get_total_product_count() FROM DUAL',[]);
+    const result = await runQuery('SELECT get_total_product_count() FROM DUAL', []);
     const totalProductCount = result.rows[0][0];
     console.log(totalProductCount);
     // await connection.close();
@@ -199,7 +199,7 @@ app.get('/totalProducts', async (req, res) => {
   console.log("hello world");
   try {
     const totalProductCount = await getTotalProductCount();
-    res.status(200).json({totalProductCount, message: 'Welcome to the API!' });
+    res.status(200).json({ totalProductCount, message: 'Welcome to the API!' });
   } catch (error) {
     console.error('Error fetching total product count:', error);
     res.status(500).json({ message: 'Error fetching total product count.' });
@@ -211,7 +211,7 @@ app.get('/totalProducts', async (req, res) => {
 
 async function getTotalCategoryCount() {
   try {
-    const result = await runQuery('SELECT COUNT(DISTINCT CATEGORY_ID) FROM "MYPROJECT"."ARTWORK"',[]);
+    const result = await runQuery('SELECT COUNT(DISTINCT CATEGORY_ID) FROM "MYPROJECT"."ARTWORK"', []);
     const totalCategoryCount = result.rows[0][0];
     console.log(totalCategoryCount);
     return totalCategoryCount;
@@ -225,7 +225,7 @@ app.get('/totalCategories', async (req, res) => {
   console.log("hello world");
   try {
     const totalCategoryCount = await getTotalCategoryCount();
-    res.status(200).json({totalCategoryCount, message: 'Welcome to the API!' });
+    res.status(200).json({ totalCategoryCount, message: 'Welcome to the API!' });
   } catch (error) {
     console.error('Error fetching total product count:', error);
     res.status(500).json({ message: 'Error fetching total product count.' });
@@ -237,7 +237,7 @@ app.get('/totalCategories', async (req, res) => {
 
 async function getTotalReviewCount() {
   try {
-    const result = await runQuery('SELECT COUNT(*) FROM "MYPROJECT"."REVIEWS"',[]);
+    const result = await runQuery('SELECT COUNT(*) FROM "MYPROJECT"."REVIEWS"', []);
     const totalReviewCount = result.rows[0][0];
     console.log(totalReviewCount);
     return totalReviewCount;
@@ -251,7 +251,7 @@ app.get('/totalReviews', async (req, res) => {
   console.log("hello world");
   try {
     const totalReviewCount = await getTotalReviewCount();
-    res.status(200).json({totalReviewCount, message: 'Welcome to the API!' });
+    res.status(200).json({ totalReviewCount, message: 'Welcome to the API!' });
   } catch (error) {
     console.error('Error fetching total product count:', error);
     res.status(500).json({ message: 'Error fetching total product count.' });
@@ -263,7 +263,7 @@ app.get('/totalReviews', async (req, res) => {
 
 async function getTotalCustomerCount() {
   try {
-    const result = await runQuery('SELECT COUNT(*) FROM "MYPROJECT"."USERS"',[]);
+    const result = await runQuery('SELECT COUNT(*) FROM "MYPROJECT"."USERS"', []);
     const totalCustomerCount = result.rows[0][0];
     console.log(totalCustomerCount);
     return totalCustomerCount;
@@ -277,7 +277,7 @@ app.get('/totalCustomers', async (req, res) => {
   console.log("hello world");
   try {
     const totalCustomerCount = await getTotalCustomerCount();
-    res.status(200).json({totalCustomerCount, message: 'Welcome to the API!' });
+    res.status(200).json({ totalCustomerCount, message: 'Welcome to the API!' });
   } catch (error) {
     console.error('Error fetching total product count:', error);
     res.status(500).json({ message: 'Error fetching total product count.' });
@@ -322,6 +322,11 @@ app.post('/searchProduct', async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
+
+
+
+
+
 
 app.get('/categories', async (req, res) => {
   try {
@@ -496,6 +501,141 @@ app.put("/add", async (req, res) => {
     res.status(500).json({ message: "Error inserting row." });
   }
 });
+
+// ------Sidebar to Anything------
+
+app.post('/adminSidebarToAveragetime', async (req, res) => {
+  // const { userId } = req.body;
+
+  try {
+    const query = `
+    WITH UserOrderDates AS (
+      SELECT
+          U.USER_ID,
+          O.ORDER_DATE,
+          LAG(O.ORDER_DATE) OVER (PARTITION BY U.USER_ID ORDER BY O.ORDER_DATE) AS PREVIOUS_ORDER_DATE
+      FROM USERS U
+      JOIN ORDERS O ON U.USER_ID = O.USER_ID
+  )
+  SELECT
+      U.USERNAME,
+      ROUND(AVG(MONTHS_BETWEEN(O.ORDER_DATE, O.PREVIOUS_ORDER_DATE)), 2) AS AVG_MONTHS_BETWEEN_ORDERS
+  FROM USERS U
+  JOIN UserOrderDates O ON U.USER_ID = O.USER_ID
+  GROUP BY U.USERNAME
+    `;
+
+    // const bindParams = {
+    //   userId: userId
+    // };
+
+    // Execute the query
+    const queryData = await runQuery(query, []);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'USERNAME',
+      'AVG_MONTHS_BETWEEN_ORDERS'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.USERNAME,
+      item.AVG_MONTHS_BETWEEN_ORDERS
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
+
+
+// ------Sidebar to Bestseller------
+
+app.post('/adminSidebarToBestseller', async (req, res) => {
+  // const { userId } = req.body;
+
+  try {
+    const query = `
+    SELECT
+    A.NAME AS ARTIST_NAME,
+    TO_CHAR(O.ORDER_DATE, 'YYYY') AS ORDER_YEAR,
+    SUM(OI.ITEM_PRICE) AS TOTAL_SALES,
+    COUNT(OI.ARTWORK_ID) AS TOTAL_SOLD_PRODUCTS
+FROM
+    ARTISTS A
+JOIN
+    ARTWORK W ON A.ARTIST_ID = W.ARTIST_ID
+JOIN
+    ORDERITEMS OI ON W.ARTWORK_ID = OI.ARTWORK_ID
+JOIN
+    ORDERS O ON OI.ORDER_ID = O.ORDER_ID
+WHERE
+    TO_CHAR(O.ORDER_DATE, 'YYYY') = '2023' -- Replace with the desired year
+GROUP BY
+    A.NAME,
+    TO_CHAR(O.ORDER_DATE, 'YYYY')
+ORDER BY
+    TOTAL_SALES DESC
+    `;
+
+    // const bindParams = {
+    //   userId: userId
+    // };
+
+    // Execute the query
+    const queryData = await runQuery(query, []);
+
+    // Define the columns to extract from the query data
+    const columnsToExtract = [
+      'ARTIST_NAME',
+      'ORDER_YEAR',
+      'TOTAL_SALES',
+      'TOTAL_SOLD_PRODUCTS'
+    ];
+
+    // Extract the data using the extractData function
+    const orderHistory = extractData(queryData, columnsToExtract);
+
+    // Add imageUrl property to each item
+    const orderHistoryWithImages = orderHistory.map(item => ({
+      ...item
+      // imageUrl: /images/${ item.ARTWORK_ID }.jpg
+    }));
+
+    // Return the order history as an array of arrays
+    const orderHistoryArray = orderHistoryWithImages.map(item => [
+      item.ARTIST_NAME,
+      item.ORDER_YEAR,
+      item.TOTAL_SALES,
+      item.TOTAL_SOLD_PRODUCTS     
+    ]);
+
+    res.json(orderHistoryArray);
+  } catch (error) {
+    console.error('Error fetching average time:', error);
+    res.status(500).json({ error: 'Error fetching average time' });
+  }
+});
+
+
+
+
+
+
+
+
 
 const port = 8000;
 
